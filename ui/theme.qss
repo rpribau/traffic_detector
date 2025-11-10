@@ -1,0 +1,78 @@
+/* * Archivo QSS para un tema oscuro simple
+ */
+
+/* Estilo general de la ventana y widgets */
+QWidget {
+    background-color: #2E2E2E;
+    color: #E0E0E0;
+    font-family: Arial, sans-serif;
+}
+
+/* Botones */
+QPushButton {
+    background-color: #4A4A4A;
+    border: 1px solid #555555;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+QPushButton:hover {
+    background-color: #5A5A5A;
+}
+QPushButton:pressed {
+    background-color: #6A6A6A;
+}
+QPushButton:disabled {
+    background-color: #404040;
+    color: #888888;
+}
+
+/* Menú desplegable (ComboBox) y Línea de Texto (LineEdit) */
+QComboBox, QLineEdit {
+    background-color: #3C3C3C;
+    border: 1px solid #555555;
+    padding: 6px;
+    border-radius: 4px;
+}
+QComboBox::drop-down {
+    border: none;
+    background-color: #4A4A4A;
+}
+
+/* Pestañas (Tabs) */
+QTabBar::tab {
+    background: #3C3C3C;
+    border: 1px solid #555555;
+    padding: 10px 20px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+QTabBar::tab:selected {
+    background: #2E2E2E; /* Mismo color que el fondo de la pestaña */
+    border-bottom-color: #2E2E2E;
+}
+QTabWidget::pane {
+    border: 1px solid #555555;
+    border-top: none; /* La pestaña seleccionada oculta el borde superior */
+}
+
+/* Barra de estado */
+QStatusBar {
+    background-color: #222222;
+    color: #AAAAAA;
+}
+QStatusBar::item {
+    border: none;
+}
+
+/* El visor de video (lo identificaremos por su nombre) */
+#video_label {
+    background-color: #000000;
+    border: 1px solid #555555;
+}
+
+/* Títulos en la pestaña de métricas */
+QLabel[font-weight="bold"] {
+    font-size: 14px;
+    color: #FFFFFF;
+}
