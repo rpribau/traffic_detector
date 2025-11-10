@@ -1,78 +1,185 @@
-/* * Archivo QSS para un tema oscuro simple
+/*
+ * Tema "Azul Mariner" con estética shadcn/ui (v4 - Plotly y QSplitter)
  */
 
-/* Estilo general de la ventana y widgets */
+/* ==================== Estilos Base ==================== */
 QWidget {
-    background-color: #2E2E2E;
-    color: #E0E0E0;
+    background-color: #1A2E51; /* Azul Mariner / 950 */
+    color: #DDEEFC; /* Azul Mariner / 100 */
     font-family: Arial, sans-serif;
+    font-size: 14px;
+    border: none;
 }
 
-/* Botones */
-QPushButton {
-    background-color: #4A4A4A;
-    border: 1px solid #555555;
-    padding: 8px 12px;
-    border-radius: 4px;
+/* ==================== Sidebar ==================== */
+#sidebar {
+    background-color: #244984; /* Azul Mariner / 900 */
+    border-right: 1px solid #2654A7; /* Borde sutil */
+}
+#sidebar QLabel {
+    font-size: 14px;
     font-weight: bold;
+    color: #F0F8FE;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    padding-left: 5px;
+}
+#sidebar_metrics_label {
+    font-size: 13px;
+    font-weight: normal;
+    color: #C3E2FA; /* Azul Mariner / 200 */
+    padding-left: 5px;
+}
+#sidebar_metrics_value {
+    font-size: 14px;
+    font-weight: bold;
+    color: #F0F8FE;
+    text-align: right;
+    padding-right: 5px;
+}
+
+/* ==================== Botones (Estilo shadcn) ==================== */
+QPushButton {
+    /* Estilo "default" (primary) */
+    background-color: #2766CB; /* Azul Mariner / 700 */
+    color: #F0F8FE; /* Azul Mariner / 50 */
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 15px;
+    border-radius: 6px;
+    icon-size: 16px;
+    text-align: left;
+    padding-left: 10px;
+    margin-bottom: 5px;
 }
 QPushButton:hover {
-    background-color: #5A5A5A;
+    background-color: #4599EC; /* Azul Mariner / 500 */
 }
 QPushButton:pressed {
-    background-color: #6A6A6A;
-}
-QPushButton:disabled {
-    background-color: #404040;
-    color: #888888;
+    background-color: #69B7F1; /* Azul Mariner / 400 */
 }
 
-/* Menú desplegable (ComboBox) y Línea de Texto (LineEdit) */
-QComboBox, QLineEdit {
-    background-color: #3C3C3C;
-    border: 1px solid #555555;
-    padding: 6px;
-    border-radius: 4px;
+/* Estilo "secondary" (más sutil) */
+QPushButton#secondary {
+    background-color: #2654A7; /* Azul Mariner / 800 */
+    color: #DDEEFC;
+}
+QPushButton#secondary:hover {
+    background-color: #244984; /* Azul Mariner / 900 */
+}
+
+/* ==================== Inputs y ComboBox (Estilo shadcn) ==================== */
+QLineEdit, QComboBox, QDateEdit {
+    background-color: #244984; /* Azul Mariner / 900 */
+    border: 1px solid #2654A7; /* Borde sutil */
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #F0F8FE;
+    margin-bottom: 5px;
+}
+QLineEdit:focus, QComboBox:focus, QDateEdit:focus {
+    border: 1px solid #4599EC; /* Resaltar al enfocar */
 }
 QComboBox::drop-down {
     border: none;
-    background-color: #4A4A4A;
+    background-color: #2766CB;
+    border-radius: 3px;
+    margin: 3px;
+    width: 20px;
+}
+QDateEdit::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left: 1px solid #2654A7;
 }
 
-/* Pestañas (Tabs) */
+/* ==================== Pestañas (Tabs) ==================== */
 QTabBar::tab {
-    background: #3C3C3C;
-    border: 1px solid #555555;
-    padding: 10px 20px;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
+    background: none;
+    border: none;
+    color: #99D0F7; /* Azul Mariner / 300 */
+    padding: 12px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 4px;
+    margin-right: 2px;
+}
+QTabBar::tab:hover {
+    background-color: #2654A7;
+    color: #F0F8FE;
 }
 QTabBar::tab:selected {
-    background: #2E2E2E; /* Mismo color que el fondo de la pestaña */
-    border-bottom-color: #2E2E2E;
+    background-color: #1A2E51; /* Fondo principal */
+    color: #F0F8FE;
+    border-bottom: 2px solid #4599EC; /* Línea de énfasis */
 }
 QTabWidget::pane {
-    border: 1px solid #555555;
-    border-top: none; /* La pestaña seleccionada oculta el borde superior */
+    border: 1px solid #2654A7;
+    border-radius: 6px;
+    margin-top: -1px;
 }
 
-/* Barra de estado */
-QStatusBar {
-    background-color: #222222;
-    color: #AAAAAA;
-}
-QStatusBar::item {
-    border: none;
-}
-
-/* El visor de video (lo identificaremos por su nombre) */
+/* ==================== Visor de Video ==================== */
 #video_label {
     background-color: #000000;
-    border: 1px solid #555555;
+    border: 1px solid #2654A7;
+    border-radius: 6px;
 }
 
-/* Títulos en la pestaña de métricas */
-QLabel[font-weight="bold"] {
-    font-size: 14px;
-    color: #FFFFFF;
+/* ==================== Barra de Estado ==================== */
+QStatusBar {
+    background-color: #244984;
+    color: #99D0F7;
+    border-top: 1px solid #2654A7;
+    padding: 5px;
+    font-size: 12px;
+}
+
+/* ==================== (NUEVO) Divisor Ajustable ==================== */
+QSplitter::handle {
+    background-color: #2654A7; /* Azul Mariner / 800 */
+    width: 1px; /* hacerlo muy sutil */
+}
+QSplitter::handle:hover {
+    background-color: #4599EC; /* Azul Mariner / 500 */
+    width: 3px; /* Se expande al pasar el mouse */
+}
+QSplitter::handle {
+    background-color: #E5E7EB; /* Light mode: gris claro */
+    width: 1px; /* sutil */
+    border-left: 1px solid #F3F4F6;
+    border-right: 1px solid #F3F4F6;
+}
+QSplitter::handle:hover {
+    background-color: #D1D5DB; /* más oscuro al pasar el mouse */
+    width: 3px; /* se expande al hover */
+}
+QSplitter::handle:pressed {
+    background-color: #9CA3AF; /* estado presionado */
+    width: 3px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04);
+}
+
+/* ==================== (NUEVO) Web View (Mapa y Gráficas) ==================== */
+/* Esto le da la apariencia de "tarjeta" de shadcn */
+QWebEngineView {
+    border: 1px solid #2654A7; /* Borde de tarjeta */
+    border-radius: 6px;
+}
+
+
+/* ==================== (NUEVO) Contenedores ==================== */
+
+/* Arregla el fondo blanco del área de contenido principal */
+#content_area {
+    background-color: #1A2E51;
+}
+
+/* * Arregla el fondo blanco en la pestaña de métricas.
+ * Esto le da estilo al 'GraphWidget' (el panel derecho del divisor).
+ */
+#graph_widget_container {
+    background-color: #1A2E51; /* Fondo principal (Azul Mariner / 950) */
 }

@@ -1,4 +1,20 @@
 import sys
+import os # <-- (NUEVO) Importar 'os'
+
+# --- (NUEVO) Forzar el backend de Matplotlib ---
+#
+# 1. Le decimos a matplotlib que use 'pyside6' como su "API de Qt".
+#    Esto debe hacerse ANTES de importar matplotlib.backends.
+os.environ['QT_API'] = 'pyside6' 
+
+# 2. Importamos matplotlib
+import matplotlib
+
+# 3. Usamos 'qtagg' (el backend genérico de Qt) en lugar de 'Qt6Agg'.
+#    Gracias a la variable de entorno, 'qtagg' se conectará a PySide6.
+matplotlib.use('qtagg') 
+# ---------------------------------------------------
+
 from PySide6.QtWidgets import QApplication
 from ui.main_window import MainWindow
 
@@ -22,9 +38,8 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     
-    # --- AÑADIR ESTAS LÍNEAS ---
+    # --- Cargar estilo ---
     load_stylesheet(app)
-    # ---------------------------
     
     # Pasamos el módulo del motor a nuestra ventana principal
     window = MainWindow(motor_contador)
