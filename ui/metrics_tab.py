@@ -59,7 +59,9 @@ class MetricsTab(QWidget):
     @Slot(str)
     def center_map_on(self, camera_name):
         if camera_name in self.camera_locations:
-            location = self.camera_locations[camera_name]
+            # (ACTUALIZADO) Ahora 'camera_locations' es un dict de dicts
+            camera_data = self.camera_locations[camera_name]
+            location = camera_data["coords"]
             self.map_widget.center_on(location)
 
 # --- WIDGET DEL MAPA (IZQUIERDA) ---
@@ -76,10 +78,18 @@ class MapWidget(QWidget):
 
     def generate_and_load_map(self):
         m = folium.Map(location=MONTERREY_COORDS, zoom_start=13, tiles="OpenStreetMap")
-        for name, coords in self.camera_locations.items():
+        
+        # (ACTUALIZADO) Iteramos la nueva estructura de datos
+        for name, info in self.camera_locations.items():
+            coords = info["coords"]
+            direction = info.get("direction", "N/A")
+            
+            # Mostramos Nombre + Dirección en el popup
+            popup_html = f"<strong>{name}</strong><br>Dir: {direction}"
+            
             folium.Marker(
                 location=coords,
-                popup=f"<strong>{name}</strong>", 
+                popup=popup_html, 
                 tooltip=name
             ).add_to(m)
         
@@ -92,23 +102,18 @@ class MapWidget(QWidget):
         js_script = f"map.setView([{location[0]}, {location[1]}], 16);"
         self.web_view.page().runJavaScript(js_script)
 
-# --- WIDGET DE GRÁFICAS (DERECHA) - CORREGIDO ---
+# --- WIDGET DE GRÁFICAS (DERECHA) ---
 
 class GraphWidget(QWidget):
     def __init__(self):
         super().__init__()
-        
-        # --- ¡CORRECCIÓN 1: Poner el ID de QSS! ---
         self.setObjectName("graph_widget_container")
         
-        # --- ¡CORRECCIÓN 2: Añadir márgenes al layout principal! ---
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10) # Padding
+        layout.setContentsMargins(10, 10, 10, 10) 
         
-        # --- 1. Controles de Filtros ---
-        # ¡CORRECCIÓN 3: Eliminar el QWidget innecesario (filter_widget)!
         filter_layout = QFormLayout()
-        filter_layout.setContentsMargins(0, 0, 0, 10) # Espacio debajo
+        filter_layout.setContentsMargins(0, 0, 0, 10) 
         
         self.date_filter = QDateEdit()
         self.date_filter.setCalendarPopup(True)
@@ -116,19 +121,14 @@ class GraphWidget(QWidget):
         
         filter_layout.addRow("Filtrar por Fecha:", self.date_filter)
         
-        # Añadir el layout de formulario directamente al layout principal
         layout.addLayout(filter_layout) 
         
-        # --- 2. QWebEngineView para las gráficas de Plotly ---
         self.plot_view = QWebEngineView()
         layout.addWidget(self.plot_view, 1)
         
         self.update_charts(["Carro", "Bus", "Camión"], [10, 5, 3]) 
 
     def update_charts(self, labels, data):
-        """
-        Crea un dashboard de Plotly con 2 gráficas y lo carga en el Web View.
-        """
         fig = make_subplots(
             rows=2, cols=1,
             specs=[[{"type": "bar"}], [{"type": "pie"}]],
