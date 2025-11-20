@@ -4,7 +4,6 @@
 #include <thread>
 #include <unordered_set>
 
-// --- FUNCIONES MATEMÁTICAS AUXILIARES ---
 int VehicleCounter::ccw(cv::Point a, cv::Point b, cv::Point c) {
     double val = (double)(b.x - a.x) * (c.y - a.y) - (double)(b.y - a.y) * (c.x - a.x);
     if (val > 0) return 1;
@@ -20,7 +19,6 @@ VehicleCounter::VehicleCounter(const std::string& onnx_model_path, const std::st
     : m_is_running(false)
 {
     m_config.precision = Precision::FP16; 
-    
     m_yolo = std::make_unique<YoloV8>(onnx_model_path, trt_model_path, m_config);
     m_tracker = std::make_unique<CentroidTracker>(100.0); 
 
@@ -40,7 +38,7 @@ VehicleCounter::VehicleCounter(const std::string& onnx_model_path, const std::st
     m_counting_lines.push_back({{270, 90}, {180, 80}, "", false, cv::Scalar(148, 0, 211)});
     m_counting_lines.push_back({{189, 65}, {169, 86}, "Covarrubias (Este-Oeste)", true, cv::Scalar(0, 0, 255)});
 
-    std::cout << "Motor inicializado con cajas ajustadas." << std::endl;
+    std::cout << "Motor inicializado (Votación Ponderada)." << std::endl;
 }
 
 VehicleCounter::~VehicleCounter() {
@@ -50,10 +48,7 @@ VehicleCounter::~VehicleCounter() {
 void VehicleCounter::start_processing(const std::string& video_path) {
     if (m_is_running) return;
     m_cap.open(video_path);
-    if (!m_cap.isOpened()) {
-        std::cerr << "Error al abrir video." << std::endl;
-        return;
-    }
+    if (!m_cap.isOpened()) return;
     m_is_running = true;
     m_processing_thread = std::thread(&VehicleCounter::processing_loop, this);
 }
@@ -71,6 +66,7 @@ void VehicleCounter::processing_loop() {
     m_prev_centroids.clear();
     m_track_paths.clear();
     m_counted_ids.clear();
+    m_class_votes.clear();
 
     static const std::unordered_set<std::string> allowed_classes = {
         "car", "truck", "bus", "motorcycle", "bicycle"
@@ -78,7 +74,6 @@ void VehicleCounter::processing_loop() {
 
     while (m_is_running && m_cap.read(frame)) {
         auto start_time = std::chrono::steady_clock::now();
-
         if (frame.empty()) break;
 
         cv::Size target_size(320, 240); 
@@ -89,29 +84,18 @@ void VehicleCounter::processing_loop() {
         // 1. Detección
         auto raw_detections = m_yolo->detectObjects(frame);
 
-        // --- NUEVO: REDUCCIÓN DE CAJAS (SHRINK) ---
-        // Reducimos el tamaño de la caja un 20% (0.2) para que se ajuste mejor al objeto
-        // y el centroide sea más preciso, ignorando sombras periféricas.
+        // Shrink boxes
         float shrink_amount = 0.2f; 
-
         for (auto& det : raw_detections) {
             float w = det.rect.width;
             float h = det.rect.height;
-            
-            // Nuevas dimensiones
             float new_w = w * (1.0f - shrink_amount);
             float new_h = h * (1.0f - shrink_amount);
-            
-            // Centrar la nueva caja dentro de la vieja
-            float offset_x = (w - new_w) / 2.0f;
-            float offset_y = (h - new_h) / 2.0f;
-
-            det.rect.x += offset_x;
-            det.rect.y += offset_y;
+            det.rect.x += (w - new_w) / 2.0f;
+            det.rect.y += (h - new_h) / 2.0f;
             det.rect.width = new_w;
             det.rect.height = new_h;
         }
-        // -------------------------------------------
 
         std::vector<Object> filtered_detections;
         for (const auto& det : raw_detections) {
@@ -127,21 +111,40 @@ void VehicleCounter::processing_loop() {
 
         std::vector<Object> objects_to_draw;
         
-        // Limpieza de datos viejos
+        // Limpieza
         for (auto it = m_track_paths.begin(); it != m_track_paths.end(); ) {
             bool found = false;
             for (const auto& tobj : tracked_objects) if (tobj.id == it->first) found = true;
             if (!found) {
                 it = m_track_paths.erase(it);
                 m_prev_centroids.erase(it->first);
+                if (m_class_votes.count(it->first)) m_class_votes.erase(it->first);
             } else ++it;
         }
 
         for (const auto& tobj : tracked_objects) {
+            // --- SISTEMA DE VOTACIÓN PONDERADO ---
+            // Sumamos la PROBABILIDAD en lugar de solo 1.
+            // Un "Bus: 0.8" vale más que dos "Car: 0.3".
+            m_class_votes[tobj.id][tobj.detection.label] += tobj.detection.probability;
+
+            int best_label_id = tobj.detection.label;
+            float max_votes = 0.0f;
+            
+            for (auto const& [label_id, score] : m_class_votes[tobj.id]) {
+                if (score > max_votes) {
+                    max_votes = score;
+                    best_label_id = label_id;
+                }
+            }
+
+            Object stabilized_obj = tobj.detection;
+            stabilized_obj.label = best_label_id; 
+            // -------------------------------------
+
             m_track_paths[tobj.id].push_back(tobj.centroid);
             if (m_track_paths[tobj.id].size() > 20) m_track_paths[tobj.id].erase(m_track_paths[tobj.id].begin());
 
-            // Lógica de Conteo
             if (m_prev_centroids.count(tobj.id)) {
                 cv::Point prev = m_prev_centroids[tobj.id];
                 cv::Point curr = tobj.centroid;
@@ -164,7 +167,9 @@ void VehicleCounter::processing_loop() {
                                 std::lock_guard<std::mutex> lock(m_counts_mutex);
                                 m_counts[line.label]++;
                                 m_counted_ids[tobj.id].push_back(line.label);
-                                std::cout << "CRUCE: " << line.label << " (ID: " << tobj.id << ")" << std::endl;
+                                
+                                std::string class_name = m_config.classNames[stabilized_obj.label];
+                                std::cout << "CRUCE: " << line.label << " | Tipo: " << class_name << std::endl;
                                 cv::circle(frame, curr, 10, cv::Scalar(255, 255, 255), -1);
                             }
                         }
@@ -173,9 +178,8 @@ void VehicleCounter::processing_loop() {
             }
             m_prev_centroids[tobj.id] = tobj.centroid;
 
-            // Dibujar ID
             cv::putText(frame, std::to_string(tobj.id), tobj.centroid, cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(0,255,0), 1);
-            objects_to_draw.push_back(tobj.detection);
+            objects_to_draw.push_back(stabilized_obj);
         }
 
         m_yolo->drawObjectLabels(frame, objects_to_draw, 1); 

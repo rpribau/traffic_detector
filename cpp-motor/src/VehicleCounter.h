@@ -10,13 +10,12 @@
 #include "yolov8.h" 
 #include "tracking/CentroidTracker.h"
 
-// Estructura mejorada para líneas y checkpoints
 struct CountingLine {
     cv::Point p1;
     cv::Point p2;
-    std::string label;      // Clave para el conteo (ej: "Revolucion_NS")
-    bool is_checkpoint;     // True = Cuenta vehículos, False = Solo dibujo
-    cv::Scalar color;       // Color de la línea
+    std::string label;
+    bool is_checkpoint;
+    cv::Scalar color;
 };
 
 class VehicleCounter {
@@ -32,8 +31,6 @@ public:
 
 private:
     void processing_loop();
-
-    // Función auxiliar matemática para intersección de segmentos
     bool segments_intersect(cv::Point a, cv::Point b, cv::Point c, cv::Point d);
     int ccw(cv::Point a, cv::Point b, cv::Point c);
 
@@ -44,13 +41,15 @@ private:
 
     std::map<std::string, int> m_counts;
     
-    // Historial simple del último punto (necesario para calcular intersección)
     std::map<int, cv::Point> m_prev_centroids; 
-
     std::map<int, std::vector<cv::Point>> m_track_paths;
-    std::vector<CountingLine> m_counting_lines;
-    // Registro de qué IDs ya fueron contados en qué línea para no contarlos doble
     std::map<int, std::vector<std::string>> m_counted_ids; 
+
+    // --- CAMBIO: Mapa de votos ahora usa FLOAT para acumular probabilidad ---
+    std::map<int, std::map<int, float>> m_class_votes; 
+    // -----------------------------------------------------------------------
+
+    std::vector<CountingLine> m_counting_lines;
 
     cv::Mat m_latest_frame;
     std::mutex m_frame_mutex;
